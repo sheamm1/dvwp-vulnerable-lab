@@ -2,6 +2,9 @@
 
 Playground for WordPress hacking and [wpscan](https://github.com/wpscanteam/wpscan) testing.
 
+Source: **https://github.com/sheamm1/dvwp-vulnerable-lab** (fork of
+[vavkamil/dvwp](https://github.com/vavkamil/dvwp))
+
 **DO NOT EXPOSE THIS TO INTERNET!**
 **This stack is intentionally vulnerable. It is for training/CTF purposes only.**
 
@@ -24,11 +27,14 @@ docker-compose bind-mounts.
 ## Installation
 
 ```
-$ git clone https://github.com/vavkamil/dvwp.git
-$ cd dvwp/
-$ bin/download-plugins.sh          # fetch vulnerable plugins/themes at pinned versions (svn co / zip)
+$ git clone https://github.com/sheamm1/dvwp-vulnerable-lab.git
+$ cd dvwp-vulnerable-lab/
 $ docker-compose up -d             # starts everything, wp-cli installs & activates everything automatically
 ```
+
+> The vulnerable plugins/themes are **vendored in this repository** (see
+> `plugins/` and `themes/`). `bin/download-plugins.sh` is only needed if you
+> want to (re)fetch them from wordpress.org at their pinned vulnerable versions.
 
 > First pull of the images can take a while. **Upgrading from an older version
 > (the previous Dockerfile-based setup)?** Run `docker-compose down -v` once to
@@ -77,9 +83,10 @@ $ bin/pull-logs.sh           # copies access.log + error.log from the WordPress 
 
 Feel free to contribute with pull requests ;)
 
-All plugins and themes are downloaded **at their exact vulnerable version** by
-`bin/download-plugins.sh` (via `svn co`/`svn export` on wordpress.org, with a
-zip fallback). They are not stored in this repository.
+All plugins and themes are vendored **at their exact vulnerable version** in
+this repository (see `plugins/` and `themes/`), so the lab runs out of the box.
+They were fetched from wordpress.org by `bin/download-plugins.sh` (via
+`svn co`/`svn export`, with a zip fallback).
 
 ### Plugins
 
