@@ -1,0 +1,90 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  wordpress:
+    image: wordpress:7.1-php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "31337:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - "wp:/var/www/html:rw"
+      - "./otherz/dump.sql:/var/www/html/dump.sql:ro"
+      - "./otherz/adminer.php:/var/www/html/adminer.php:ro"
+      - "./otherz/info.php:/var/www/html/info.php:ro"
+      - "./otherz/php.ini:/usr/local/etc/php/conf.d/zz-dvwp.ini:ro"
+      - "./otherz/php.ini:/var/www/html/php.ini:ro"
+      - "./otherz/compat.php:/var/www/html/compat.php:ro"
+      - "./otherz/cross-domain:/var/www/html/cross-domain:ro"
+      - "./otherz/search-replace-db:/var/www/html/search-replace-db:ro"
+      - "./plugins:/var/www/html/wp-content/plugins"
+      - "./themes:/var/www/html/wp-content/themes"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.1.1
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "31338:80"
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: password
+      UPLOAD_LIMIT: 64M
+
+  # Runs wp-cli setup automatically when the stack comes up.
+  wp-cli:
+    image: wordpress:cli-php8.3
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command: >
+      i=0;
+      until { [ -f /var/www/html/wp-settings.php ] && [ -f /var/www/html/wp-config.php ]; } || [ $$i -ge 60 ]; do
+        sleep 2;
+        i=$$((i+1));
+      done;
+      if [ ! -f /var/www/html/wp-settings.php ]; then
+        echo "ERROR: WordPress core never appeared in /var/www/html" >&2;
+        exit 1;
+      fi;
+      exec /usr/local/bin/install-wp
+    depends_on:
+      mysql:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    volumes:
+      - "wp:/var/www/html:rw"
+      - "./otherz/dump.sql:/var/www/html/dump.sql:ro"
+      - "./otherz/php.ini:/usr/local/etc/php/conf.d/zz-dvwp.ini:ro"
+      - "./otherz/compat.php:/var/www/html/compat.php:ro"
+      - "./bin/install-wp.sh:/usr/local/bin/install-wp:ro"
+      - "./plugins:/var/www/html/wp-content/plugins"
+      - "./themes:/var/www/html/wp-content/themes"
+
+volumes:
+  wp: {}
+  db: {}

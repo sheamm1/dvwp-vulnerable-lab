@@ -1,0 +1,16 @@
+# Downloaded plugin/theme source gets committed so the lab runs out-of-the-box.
+# Exclusions:
+
+# Exploit playbooks, PoC clones, reports
+/cheatsheets/
+/reports/
+
+# One-off local artifacts
+/shell.php
+/dvwp-add-users.php
+
+# VCS metadata and OS junk
+**/.svn/
+**/.git/
+**/.DS_Store
+*.log
